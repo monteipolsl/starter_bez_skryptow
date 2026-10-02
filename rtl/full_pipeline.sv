@@ -20,54 +20,58 @@ module full_pipeline #(
     output logic [W-1:0] m_data
 );
 
-logic [W-1:0] reg_0, reg_1;
-logic [1:0] counter;
+logic [W-1:0] reg0, reg1;
 logic wptr, rptr;
+logic [1:0] counter;
 logic do_write, do_read;
 
-assign do_write = s_ready & s_valid; //input handshake
-assign do_read = m_ready & m_valid; //output handshake
+assign do_write = s_ready && s_valid; //input handshake
+assign do_read = m_ready && m_valid; //output handshake
 
-assign s_ready = (counter < 2'd2); //reg is free
-assign m_valid = (counter > 2'd0); //regs are full
+assign s_ready = (counter < 2'd2); //if any reg is empty
+assign m_valid = (counter > 2'd0); //if all regs are full
 
-assign m_data = rptr ? reg_1 : reg_0; //output with mux 2x1
+assign m_data = rptr ? reg1 : reg0; //2x1 mux
 
 always_ff @(posedge clk) begin
   if (rst) begin
-    reg_0 <= '0;
-    reg_1 <= '0;
+    reg0 <= '0;
+    reg1 <= '0;
 
-    counter <= 2'd0;
-      
-    wptr <= 1'b0;
+    counter <= '0;
+
     rptr <= 1'b0;
-  end else begin
-    if (!do_read && do_write) begin
-      counter <= counter + 1'b1;
-    end else if (!do_write && do_read) begin
-      counter <= counter - 1'b1;
+    wptr <= 1'b0;
+  end  else begin
+    //1x2 dmux
+    if (do_write) begin
+      if (wptr == 1'b0) begin
+        reg0 <= s_data;
+      end else begin
+        reg1 <= s_data;
+      end
     end
 
-    if (do_write) begin
-      wptr <= ~wptr;
+    if (do_write && (!do_read)) begin
+      counter <= counter + 1;
     end 
 
+    if (do_read && (!do_write)) begin
+      counter <= counter - 1;
+    end
+
+    //if do_write -> change reg to next write
+    if (do_write) begin
+      wptr <= ~wptr;
+    end
+
+    //if do_read -> change reg to next read
     if (do_read) begin
       rptr <= ~rptr;
-    end    
+    end
+
   end
 end
 
-//input dmux 1x2
-always_ff @(posedge clk) begin
-  if (do_write) begin
-    if (wptr == 1'b0) begin
-      reg_0 <= s_data;
-    end else begin
-      reg_1 <= s_data;
-    end
-  end
-end
 
 endmodule
