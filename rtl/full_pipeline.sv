@@ -61,10 +61,13 @@ end
 
 //input dmux 1x2
 always_ff @(posedge clk) begin
-  case (do_write)
-    1'b0: reg_0 <= s_data;
-    1'b1: reg_1 <= s_data;
-  endcase
+  if (do_write) begin
+    if (wptr == 1'b0) begin
+      reg_0 <= s_data;
+    end else begin
+      reg_1 <= s_data;
+    end
+  end
 end
 
 endmodule
