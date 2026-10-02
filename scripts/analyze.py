@@ -31,12 +31,20 @@ def main(argv=None):
     # returns True if on the input handshake valid && ready == 1
     def input_handshake(cycle):
         s_valid, s_ready, s_data, m_valid, m_ready, m_data = cycle
-        return s_ready == 1 and s_valid == 1
+        if s_ready == 1 and s_valid == 1:
+            i = 1
+        else:
+            i = 0 
+        return i
 
     # returns True if on the output handshake valid && ready == 1
     def output_handshake(cycle):
         s_valid, s_ready, s_data, m_valid, m_ready, m_data = cycle
-        return m_ready == 1 and m_valid == 1
+        if m_ready == 1 and m_valid == 1:
+            i = 1
+        else:
+            i = 0 
+        return i        
 
     # structure of dictionary
     # {
@@ -65,17 +73,17 @@ def main(argv=None):
         # phase
         match_phase = phase_regexp.match(line)
         if match_phase:
-            current_phase = int(match_phase.group(1))
-            phases.setdefault(current_phase, [])
+            current_phase = int(match_phase.group(1)) #get first () in phase_regexp 
+            phases.setdefault(current_phase, []) #create list if not exist
             continue
 
-        # comments
+        # comments only without white characters
         if line.startswith("#"):
             continue
 
         if current_phase is None:
             print(f"ERROR: line {line_no}: data starts without phase")
-            parsed_cycles.append((line_no, current_phase, None))
+            parsed_cycles.append((line_no, None, None))
             continue
 
         # data
@@ -84,28 +92,28 @@ def main(argv=None):
             print(f"ERROR: line {line_no}: invalid trace line : {line}")
             parsed_cycles.append((line_no, current_phase, None))
             continue
+        else:
+            # getting all signals
+            s_valid = int(match_data.group(1))
+            s_ready = int(match_data.group(2))
+            s_data = match_data.group(3).lower()
+            m_valid = int(match_data.group(4))
+            m_ready = int(match_data.group(5))
+            m_data = match_data.group(6).lower()
 
-        # getting all signals
-        s_valid = int(match_data.group(1))
-        s_ready = int(match_data.group(2))
-        s_data = match_data.group(3).lower()
-        m_valid = int(match_data.group(4))
-        m_ready = int(match_data.group(5))
-        m_data = match_data.group(6).lower()
+            cycle = (s_valid, s_ready, s_data, m_valid, m_ready, m_data)
 
-        cycle = (s_valid, s_ready, s_data, m_valid, m_ready, m_data)
+            #adding to dictionary at current phase the current cycle
+            phases[current_phase].append(cycle)
 
-        #adding to dictionary at current phase the current cycle
-        phases[current_phase].append(cycle)
-
-        #adding to list analyzed lines in current phase 
-        parsed_cycles.append((line_no, current_phase, cycle))
+            #adding to list analyzed lines in current phase 
+            parsed_cycles.append((line_no, current_phase, cycle))
 
     errors = []
 
     for line_no, phase, cycle in parsed_cycles:
         if cycle is None:
-            errors.append(f"phase: {phase} line: {line_no}: invalid trace data")
+            errors.append(f"phase: {phase} line: {line_no}: cycle is none")
 
     if not phases:
         errors.append("trace contain no phases")
@@ -168,8 +176,12 @@ def main(argv=None):
                 output_backpressure += 1
 
         ### THROUGHPUT IN WORDS PER CLOCK CYCLE ###
-        input_throughput = (input_count / cycle_count if cycle_count > 0 else 0)
-        output_throughput = (output_count / cycle_count if cycle_count > 0 else 0)
+        if cycle_count > 0:
+            input_throughput = input_count / cycle_count
+            output_throughput = output_count / cycle_count
+        else:
+            input_throughput = 0
+            output_throughput = 0
 
         ### LATENCY in cycles of clk ###
         if first_input_cycle is not None and first_output_cycle is not None:
@@ -206,6 +218,7 @@ def main(argv=None):
                     if ("x" not in previous_waiting_data and "x" not in s_data and previous_waiting_data != s_data):
                         errors.append(f"phase {phase_no}, cycle {cycle_no}: "
                                       f"s_data changed while s_valid=1 and s_ready=0")
+                #if previous_waiting_data is None
                 previous_waiting_data = s_data
             else:
                 # reset the memory because the waiting condition is no longer effect valid=1 & ready=1
@@ -221,6 +234,7 @@ def main(argv=None):
                     if ("x" not in previous_waiting_data and "x" not in m_data and previous_waiting_data != m_data):
                         errors.append(f"phase {phase_no}, cycle {cycle_no}: "
                                       f"m_data changed while m_valid=1 and m_ready=0")
+                #if previous_waiting_data is None
                 previous_waiting_data = m_data
             else:
                 # reset the memory because the waiting condition is no longer effect valid=1 & ready=1
