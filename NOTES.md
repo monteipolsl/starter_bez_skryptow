@@ -35,8 +35,8 @@ Upon receiving an input handshake, the input data is written to the register sel
 
 A counter is used, which increments when a register write occurs and decrements when a read occurs.
 
-When the register value is less than 2, the s_ready signal is equal to 1.
-When the register value is greater than 0, the m_valid signal is equal to 1.
+When the counter value is less than 2, the s_ready signal is equal to 1.
+When the counter value is greater than 0, the m_valid signal is equal to 1.
 
 A 2x1 multiplexer is used for reading. The multiplexer reads the register written in the previous cycle, alternating the selection of registers for read operations.
 
