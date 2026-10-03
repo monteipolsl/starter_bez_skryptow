@@ -2005,6 +2005,8 @@ RESULT in=2000 out=2000 cycles=3703 errors=0 trace=build/sink.txt
 PASS
 tb\tb_full_pipeline.sv:292: $finish called at 37075000 (1ps)
 TODO: analyze build\sink.txt
+found phase: 1
+found phase: 2
 Trace: build\sink.txt
 
 Phase:               1:
@@ -2029,7 +2031,6 @@ latency:             2 cycles
 
 
 CHECKS: FAILS
-ERROR: phase 1: cycle 0: expected output transfer every cycle
 ERROR: phase 1: cycle 1000: expected input transfer every cycle
 ERROR: phase 1: cycle 1001: expected input transfer every cycle
 ERROR: phase 1: cycle 1001: expected output transfer every cycle
