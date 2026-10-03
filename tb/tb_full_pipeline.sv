@@ -151,7 +151,7 @@ module tb_full_pipeline;
 	  //to stabilize the signals
 	  @(posedge clk); 
 
-	  //waiting for s_ready=1 to get new value
+	  //waiting for s_ready=1 to get new value 
 	  while (!s_ready) begin
 		@(posedge clk);
 	  end
