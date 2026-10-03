@@ -116,7 +116,7 @@ def main(argv=None):
         # process the directionary for detected phases one by one
         for phase_no in sorted(phases):
 
-            # phase_no is a list od cycles form current analyzed phase
+            # phase_no is a list of cycles form current analyzed phase
             cycles = phases[phase_no]
             cycle_count = len(cycles)  # number of cycles in analyzed phase
 
